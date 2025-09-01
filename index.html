@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ferramentas SPED</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --bg-2: #12192b;
+      --fg: #e6e9ef;
+      --muted: #98a2b3;
+      --accent: #7c3aed; /* roxo */
+      --accent-2: #22d3ee; /* ciano */
+      --card: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    @media (prefers-color-scheme: light) {
+      :root{ --bg:#f7f7fb; --bg-2:#ffffff; --fg:#0f172a; --muted:#475569; --card:rgba(0,0,0,.04); --border:rgba(0,0,0,.08); }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--fg);
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(124,58,237,.25), transparent),
+                  radial-gradient(900px 500px at 110% 0%, rgba(34,211,238,.25), transparent),
+                  linear-gradient(180deg, var(--bg), var(--bg-2));
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 980px;
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; margin-bottom: 20px;
+    }
+    .brand { display: flex; align-items:center; gap:12px; font-weight: 800; letter-spacing: .2px; }
+    .brand-logo { width: 36px; height: 36px; border-radius: 12px; background:
+      radial-gradient(60% 60% at 30% 30%, rgba(255,255,255,.35), transparent),
+      linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow);
+    }
+    .card {
+      background: backdrop-filter: blur(8px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero { padding: 32px 28px 10px; }
+    .title { font-size: clamp(24px, 4vw, 36px); margin: 0 0 8px; }
+    .subtitle { margin: 0; color: var(--muted); font-weight: 400; }
+
+    .grid { display: grid; gap: 16px; padding: 20px; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+
+    .tool {
+      position: relative; isolation: isolate;
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 18px; border: 1px solid var(--border); border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      text-decoration: none; color: inherit;
+    }
+    .tool:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.25); border-color: rgba(124,58,237,.5); }
+    .tool:active { transform: translateY(0); }
+
+    .tool .icon {
+      width: 42px; height: 42px; border-radius: 12px; display: grid; place-items:center;
+      background: linear-gradient(135deg, rgba(124,58,237,.25), rgba(34,211,238,.25));
+      border: 1px solid var(--border);
+    }
+    .tool h3 { margin: 6px 0 4px; font-size: 18px; }
+    .tool p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .footer { display:flex; justify-content: space-between; align-items:center; gap: 12px; padding: 18px 20px; border-top: 1px dashed var(--border); color: var(--muted); font-size: 13px; }
+    .chip { font-size: 12px; padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background: rgba(255,255,255,.04); }
+    .spacer { flex: 1; }
+
+    .cta-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { appearance: none; border:1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color: var(--fg); padding: 10px 14px; border-radius: 12px; cursor:pointer; font-weight:600; }
+    .btn:hover { border-color: rgba(34,211,238,.55); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true"></div>
+        <span>Ferramentas <span style="opacity:.65">SPED</span></span>
+      </div>
+      <div class="cta-row">
+        <a class="btn" href="#" title="Reportar bug">Reportar bug</a>
+        <a class="btn" href="#" title="Contato">Contato</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hero">
+        <h1 class="title">Seu pequeno arsenal para domar o SPED.</h1>
+        <p class="subtitle">Ferramentas simples, rápidas e… implacáveis. Escolha abaixo.</p>
+      </div>
+
+      <div class="grid" role="list">
+        <!-- FERRAMENTA 1: Editor de SPED -->
+        <a class="tool" role="listitem" href="#editor-sped" title="Abrir Editor de SPED">
+          <div class="icon" aria-hidden="true">
+            <!-- ícone arquivo/código -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M8 16l-3 3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 3l-4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Editor de SPED</h3>
+          <p>Valide, formate e edite blocos e registros com precisão cirúrgica.</p>
+        </a>
+
+        <!-- FERRAMENTA 2: Editor de Fretes -->
+        <a class="tool" role="listitem" href="#editor-fretes" title="Abrir Editor de Fretes">
+          <div class="icon" aria-hidden="true">
+            <!-- ícone caminhão -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 13h11V5H3v8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M14 8h4l3 3v2h-7V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <circle cx="7" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/>
+              <circle cx="18" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+          </div>
+          <h3>Editor de Fretes</h3>
+          <p>Calcule, ajuste e exporte valores e regras de frete sem dor.</p>
+        </a>
+      </div>
+
+      <div class="footer">
+        <span class="chip">v0.1</span>
+        <div class="spacer"></div>
+        <span>Feito para humanos. Tolerado por IA.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Placeholder: ajuste as URLs das ferramentas aqui.
+    document.querySelector('a[href="#editor-sped"]').href = "/sped/editor";    // ← troque pelo caminho real
+    document.querySelector('a[href="#editor-fretes"]').href = "/fretes/editor"; // ← troque pelo caminho real
+  </script>
+</body>
+</html>
