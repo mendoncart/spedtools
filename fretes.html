@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de SPED - D101 e D105</title>
+    <style>
+        /* Estilos para deixar a interface mais bonita e profissional */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #2980b9;
+            background-color: #ecf0f1;
+        }
+
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background-color: #d5f4e6;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        .info-panel {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .progress {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .log {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        .file-info {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+            display: none;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🗂️ Editor de SPED - Registros D101 e D105</h1>
+
+        <div class="info-panel">
+            <h3>📋 O que este programa faz:</h3>
+            <ul>
+                <li><strong>D101</strong>: Calcula PIS com alíquota de <strong>1,65%</strong></li>
+                <li><strong>D105</strong>: Calcula COFINS com alíquota de <strong>7,60%</strong></li>
+                <li>Preenche campos com valores fixos padrão</li>
+                <li>Gera arquivo modificado para download</li>
+            </ul>
+        </div>
+
+        <!-- Área para arrastar e soltar o arquivo -->
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <h3>📁 Selecione seu arquivo SPED</h3>
+            <p>Clique aqui ou arraste o arquivo .txt para esta área</p>
+            <input type="file" id="fileInput" accept=".txt" />
+        </div>
+
+        <!-- Informações do arquivo selecionado -->
+        <div class="file-info" id="fileInfo"></div>
+
+        <!-- Botões de ação -->
+        <div style="text-align: center;">
+            <button class="btn" id="processBtn" onclick="processFile()" disabled>
+                🔄 Processar Arquivo
+            </button>
+            <button class="btn btn-success" id="downloadBtn" onclick="downloadFile()" disabled style="display: none;">
+                💾 Download Arquivo Modificado
+            </button>
+        </div>
+
+        <!-- Barra de progresso -->
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Processando...</p>
+        </div>
+
+        <!-- Log de atividades -->
+        <div class="log" id="log"></div>
+
+        <div class="warning">
+            <strong>⚠️ Importante:</strong> Este programa criará um novo arquivo modificado. Seu arquivo original não
+            será alterado.
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para armazenar dados
+        let selectedFile = null;       // Arquivo selecionado pelo usuário
+        let processedContent = null;   // Conteúdo processado do arquivo
+        let originalFileName = '';     // Nome do arquivo original
+
+        // Elementos da interface que usaremos frequentemente
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const log = document.getElementById('log');
+
+        // Configuração do seletor de arquivos
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Configuração para arrastar e soltar arquivos
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+
+        // Função chamada quando um arquivo é selecionado
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                originalFileName = file.name;
+                showFileInfo(file);
+                enableProcessButton();
+            }
+        }
+
+        // Função para lidar com arquivos arrastados sobre a área
+        function handleDragOver(event) {
+            event.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        // Função para quando o arquivo é solto na área
+        function handleDrop(event) {
+            event.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const file = event.dataTransfer.files[0];
+            if (file && file.type === 'text/plain') {
+                selectedFile = file;
+                originalFileName = file.name;
+                showFileInfo(file);
+                enableProcessButton();
+            } else {
+                alert('Por favor, selecione apenas arquivos .txt');
+            }
+        }
+
+        // Função para quando o arquivo sai da área de arrastar
+        function handleDragLeave(event) {
+            uploadArea.classList.remove('dragover');
+        }
+
+        // Mostra informações do arquivo selecionado
+        function showFileInfo(file) {
+            fileInfo.style.display = 'block';
+            fileInfo.innerHTML = `
+                <strong>📄 Arquivo selecionado:</strong> ${file.name}<br>
+                <strong>📏 Tamanho:</strong> ${formatFileSize(file.size)}<br>
+                <strong>📅 Modificado:</strong> ${new Date(file.lastModified).toLocaleString()}
+            `;
+        }
+
+        // Converte tamanho do arquivo para formato legível
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Habilita o botão de processar
+        function enableProcessButton() {
+            processBtn.disabled = false;
+            processBtn.textContent = '🔄 Processar Arquivo';
+        }
+
+        // Adiciona mensagem ao log
+        function addLog(message) {
+            log.style.display = 'block';
+            log.innerHTML += `[${new Date().toLocaleTimeString()}] ${message}<br>`;
+            log.scrollTop = log.scrollHeight; // Rola para o final
+        }
+
+        // Atualiza a barra de progresso
+        function updateProgress(percent, text) {
+            progress.style.display = 'block';
+            progressFill.style.width = percent + '%';
+            progressText.textContent = text;
+        }
+
+        // Função principal que processa o arquivo
+        async function processFile() {
+            if (!selectedFile) {
+                alert('Por favor, selecione um arquivo primeiro!');
+                return;
+            }
+
+            // Desabilita o botão durante o processamento
+            processBtn.disabled = true;
+            processBtn.textContent = '⏳ Processando...';
+
+            // Limpa o log anterior
+            log.innerHTML = '';
+            addLog('🚀 Iniciando processamento do arquivo SPED...');
+
+            try {
+                // Lê o conteúdo do arquivo
+                updateProgress(10, 'Lendo arquivo...');
+                const fileContent = await readFileAsText(selectedFile);
+
+                // Divide em linhas
+                updateProgress(20, 'Analisando estrutura...');
+                const lines = fileContent.split('\n');
+                addLog(`📊 Total de linhas encontradas: ${lines.length}`);
+
+                // Processa as linhas
+                updateProgress(30, 'Processando registros...');
+                const processedLines = processLines(lines);
+
+                // Junta as linhas processadas
+                updateProgress(80, 'Finalizando...');
+                processedContent = processedLines.join('\n');
+
+                updateProgress(100, 'Processamento concluído!');
+                addLog('✅ Arquivo processado com sucesso!');
+
+                // Habilita o botão de download
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.disabled = false;
+
+            } catch (error) {
+                addLog(`❌ Erro durante o processamento: ${error.message}`);
+                alert('Erro ao processar o arquivo. Verifique o log para mais detalhes.');
+            } finally {
+                // Reabilita o botão de processar
+                processBtn.disabled = false;
+                processBtn.textContent = '🔄 Processar Arquivo';
+            }
+        }
+
+        // Função para ler o arquivo como texto preservando os bytes originais
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    // Lê como array de bytes primeiro
+                    const arrayBuffer = event.target.result;
+                    const uint8Array = new Uint8Array(arrayBuffer);
+
+                    // Converte bytes para string preservando os caracteres originais
+                    let result = '';
+                    for (let i = 0; i < uint8Array.length; i++) {
+                        result += String.fromCharCode(uint8Array[i]);
+                    }
+                    resolve(result);
+                };
+                reader.onerror = (error) => reject(error);
+                // Lê como ArrayBuffer para preservar bytes exatos
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Função que processa todas as linhas do arquivo
+        function processLines(lines) {
+            const processedLines = [];
+            let exist9900D101 = false; // Flag para verificar se existe 9900|D101
+            let exist9900D105 = false; // Flag para verificar se existe 9900|D105
+            let currentD100 = null;    // Armazena o registro D100 atual (pai)
+            let d101Count = 0;         // Contador de D101 processados
+            let d105Count = 0;         // Contador de D105 processados
+            let d101Added = 0;         // Contador de D101 adicionados
+            let d105Added = 0;         // Contador de D105 adicionados
+            let totalLinesAdded = 0;   // Total de linhas adicionadas ao arquivo
+            let d100Index = -1;        // Índice do D100 atual
+
+            addLog('🔄 Processando arquivo e verificando registros necessários...');
+
+            // Percorre cada linha do arquivo
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Atualiza progresso a cada 1000 linhas
+                if (i % 1000 === 0) {
+                    const percent = 30 + (i / lines.length) * 50;
+                    updateProgress(percent, `Processando linha ${i + 1}/${lines.length}`);
+                }
+
+                // Verifica se a linha não está vazia
+                if (line) {
+                    // Divide a linha pelos separadores "|" para acessar os campos
+                    const fields = line.split('|');
+                    const recordType = fields[1]; // O tipo de registro está na posição 1
+
+                    // Se encontrou um registro D100
+                    if (recordType === 'D100') {
+                        d100Index++;
+                        currentD100 = fields;
+                        processedLines.push(line); // Adiciona a linha D100
+                        addLog(`🔍 Processando D100 #${d100Index + 1} na linha ${i + 1}`);
+
+                        // Verifica se precisa adicionar D101 imediatamente após este D100
+                        if (!d100HasD101(lines, i)) {
+                            const newD101 = createD101(currentD100);
+                            processedLines.push(newD101); // Insere IMEDIATAMENTE após o D100
+                            d101Added++;
+                            totalLinesAdded++;
+                            addLog(`➕ Adicionado D101 imediatamente após D100 #${d100Index + 1}`);
+                        }
+
+                        // Verifica se precisa adicionar D105 imediatamente após D101
+                        if (!d100HasD105(lines, i)) {
+                            const newD105 = createD105(currentD100);
+                            processedLines.push(newD105); // Insere IMEDIATAMENTE após o D101
+                            d105Added++;
+                            totalLinesAdded++;
+                            addLog(`➕ Adicionado D105 imediatamente após D100 #${d100Index + 1}`);
+                        }
+                    }
+                    // Se encontrou um registro D101, processa e modifica
+                    else if (recordType === 'D101') {
+                        if (currentD100) {
+                            const newD101 = createD101(currentD100);
+                            processedLines.push(newD101);
+                            d101Count++;
+                            addLog(`✏️ Modificado D101 existente na linha ${i + 1}`);
+                        } else {
+                            processedLines.push(line);
+                            addLog(`⚠️ D101 mantido original - sem D100 pai na linha ${i + 1}`);
+                        }
+                    }
+                    // Se encontrou um registro D105, processa e modifica
+                    else if (recordType === 'D105') {
+                        if (currentD100) {
+                            const newD105 = createD105(currentD100);
+                            processedLines.push(newD105);
+                            d105Count++;
+                            addLog(`✏️ Modificado D105 existente na linha ${i + 1}`);
+                        } else {
+                            processedLines.push(line);
+                            addLog(`⚠️ D105 mantido original - sem D100 pai na linha ${i + 1}`);
+                        }
+                    }
+                    // Se encontrar um registro D9900 para o registro D101, seta flag como true
+                    else if (recordType === '9900' && fields[2] === 'D101') {
+                        // Existe o registro contador de D101
+                        exist9900D101 = true;
+                    }
+                    // Se encontrar um registro D9900 para o registro D105, seta flag como true
+                    else if (recordType === '9900' && fields[2] === 'D105') {
+                        // Existe o registro contador de D105
+                        exist9900D105 = true;
+                    }
+                    // Para outros tipos de registro, mantém a linha EXATAMENTE como está
+                    else {
+                        processedLines.push(line);
+                    }
+                } else {
+                    // Mantém linhas vazias
+                    processedLines.push(line);
+                }
+            }
+
+            addLog(`📈 Resumo do processamento:`);
+            addLog(`   • Registros D101 modificados: ${d101Count}`);
+            addLog(`   • Registros D105 modificados: ${d105Count}`);
+            addLog(`   • Registros D101 adicionados: ${d101Added}`);
+            addLog(`   • Registros D105 adicionados: ${d105Added}`);
+            addLog(`   • Total de linhas adicionadas: ${totalLinesAdded}`);
+
+            // Atualiza os contadores no arquivo
+            return updateCounters(processedLines, d101Count + d101Added, d105Count + d105Added, totalLinesAdded, exist9900D101, exist9900D105);
+        }
+
+        // Função para verificar se existe D101 nas próximas linhas após um D100
+        function d100HasD101(lines, currentIndex) {
+            // Verifica as próximas linhas até encontrar outro D100 ou final do arquivo
+            for (let i = currentIndex + 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const fields = line.split('|');
+                    const recordType = fields[1];
+
+                    // Se encontrou D101, retorna true
+                    if (recordType === 'D101') {
+                        return true;
+                    }
+                    // Se encontrou D105, retorna true
+                    if (recordType === 'D105') {
+                        return false;
+                    }
+                    // Se encontrou outro D100, para a busca (não encontrou D101 para o D100 atual)
+                    if (recordType === 'D100') {
+                        return false;
+                    }
+                    // Se encontrou registros que não inicie com D, para a busca
+                    if (recordType && !recordType.startsWith('D')) {
+                        return false;
+                    }
+                }
+            }
+            return false; // Chegou ao final sem encontrar D101
+        }
+
+        // Função para verificar se existe D105 nas próximas linhas após um D100
+        function d100HasD105(lines, currentIndex) {
+            // Verifica as próximas linhas até encontrar outro D100 ou final do arquivo
+            for (let i = currentIndex + 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const fields = line.split('|');
+                    const recordType = fields[1];
+
+                    // Se encontrou D105, retorna true
+                    if (recordType === 'D105') {
+                        return true;
+                    }
+                    // Se encontrou outro D100, para a busca (não encontrou D105 para o D100 atual)
+                    if (recordType === 'D100') {
+                        return false;
+                    }
+                    // Se encontrou registros que não inicie com D, para a busca
+                    if (recordType && !recordType.startsWith('D')) {
+                        return false;
+                    }
+                }
+            }
+            return false; // Chegou ao final sem encontrar D105
+        }
+
+        // Função para atualizar os registros contadores
+        function updateCounters(lines, totalD101, totalD105, linesAdded, exist9900D101, exist9900D105) {
+            let extraBlocks = 0;
+
+            addLog('🔢 Atualizando contadores...');
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const fields = line.split('|');
+                    const recordType = fields[1];
+
+                    // Atualiza D990 (contador de registros D)
+                    if (recordType === 'D990') {
+                        const currentCount = parseInt(fields[2] || 0);
+                        const newCount = currentCount + linesAdded;
+                        fields[2] = newCount.toString();
+                        lines[i] = fields.join('|');
+                        addLog(`🔢 D990 atualizado: ${currentCount} → ${newCount}`);
+                    }
+
+                    // Adiciona 9900|D101 ou 9900|D105 se não existir, após o primeiro 9900|D100
+                    else if (recordType === '9900' && fields[2] === 'D100') {
+                        // Adiciona 9900|D101 se não existir
+                        if (!exist9900D101) {
+                            const new9900D101 = ['', '9900', 'D101', totalD101.toString(), ''].join('|');
+                            lines.splice(i + 1, 0, new9900D101); // Insere após o atual
+                            extraBlocks++; // Conta como linha extra adicionada
+                            addLog(`➕ Adicionado novo 9900|D101 com contador ${totalD101}`);
+                        }
+                        // Adiciona 9900|D105 se não existir
+                        if (!exist9900D105) {
+                            const new9900D105 = ['', '9900', 'D105', totalD105.toString(), ''].join('|');
+                            // Insere após o 9900|D101 se foi adicionado, senão após o 9900|D100
+                            if (!exist9900D101) {
+                                lines.splice(i + 2, 0, new9900D105); // Insere após o 9900|D101
+                            } else {
+                                lines.splice(i + 1, 0, new9900D105); // Insere após o 9900|D100
+                            }
+                            extraBlocks++; // Conta como linha extra adicionada
+                            addLog(`➕ Adicionado novo 9900|D105 com contador ${totalD105}`);
+                        }
+                    }
+
+                    // Atualiza 9900|D101 (contador de D101) se existir
+                    else if (recordType === '9900' && fields[2] === 'D101' && exist9900D101) {
+                        const currentCount = parseInt(fields[3] || 0);
+                        const newCount = totalD101;
+                        fields[3] = newCount.toString();
+                        lines[i] = fields.join('|');
+                        addLog(`🔢 9900|D101 atualizado: ${currentCount} → ${newCount}`);
+                    }
+
+                    // Atualiza 9900|D105 (contador de D105), se existir
+                    else if (recordType === '9900' && fields[2] === 'D105' && exist9900D105) {
+                        const currentCount = parseInt(fields[3] || 0);
+                        const newCount = totalD105;
+                        fields[3] = newCount.toString();
+                        lines[i] = fields.join('|');
+                        addLog(`🔢 9900|D105 atualizado: ${currentCount} → ${newCount}`);
+                    }
+
+                    // Atualiza 9990 (contador total de blocos)
+                    else if (recordType === '9990') {
+                        const currentCount = parseInt(fields[2] || 0);
+                        const newCount = currentCount + extraBlocks;
+                        fields[2] = newCount.toString();
+                        lines[i] = fields.join('|');
+                        addLog(`🔢 9990 atualizado: ${currentCount} → ${newCount}`);
+                    }
+
+                    // Atualiza 9999 (contador total de linhas)
+                    else if (recordType === '9999') {
+                        const currentCount = parseInt(fields[2] || 0);
+                        const newCount = currentCount + linesAdded + extraBlocks;
+                        fields[2] = newCount.toString();
+                        lines[i] = fields.join('|');
+                        addLog(`🔢 9999 atualizado: ${currentCount} → ${newCount}`);
+                    }
+                }
+            }
+
+            return lines;
+        }
+
+        // Função que cria um novo registro D101 baseado no D100 pai
+        function createD101(d100Fields) {
+            // Extrai valores necessários do registro D100
+            // Nota: A posição do valor pode variar, vamos procurar pelo valor numérico mais provável
+            const valorD100 = parseFloat(d100Fields[15] || 0); // Tenta posições diferentes
+            const valorICMS = parseFloat(d100Fields[20] || 0); // Valor do ICMS
+            const contaContabil = d100Fields[23] || d100Fields[22] || '4.1.2.03.027'; // Conta contábil do D100
+
+            // Cálculos para PIS (alíquota 1,65%)
+            const aliquotaPIS = 1.65;
+            const valorBC = valorD100 - valorICMS;
+            const valorPIS = (valorBC * aliquotaPIS) / 100;
+
+            // Cria o novo registro D101 com os valores calculados e fixos
+            const d101Fields = [
+                '',                                        // Campo 0: vazio (separador inicial)
+                'D101',                                    // Campo 1: tipo de registro
+                '0',                                       // Campo 2: valor fixo
+                valorD100.toString().replace('.', ','),    // Campo 3: valor base (do D100) com vírgula
+                '50',                                      // Campo 4: valor fixo
+                '14',                                      // Campo 5: valor fixo
+                valorBC.toString().replace('.', ','),    // Campo 6: valor base (repetido) com vírgula
+                aliquotaPIS.toString().replace('.', ','),  // Campo 7: alíquota do PIS com vírgula
+                valorPIS.toFixed(2).replace('.', ','),     // Campo 8: valor calculado do PIS com vírgula
+                contaContabil,                             // Campo 9: conta contábil
+                ''                                         // Campo 10: vazio (separador final)
+            ];
+
+            return d101Fields.join('|');
+        }
+
+        // Função que cria um novo registro D105 baseado no D100 pai
+        function createD105(d100Fields) {
+            // Extrai valores necessários do registro D100
+            const valorD100 = parseFloat(d100Fields[15] || 0); // Tenta posições diferentes
+            const valorICMS = parseFloat(d100Fields[20] || 0); // Valor do ICMS
+            const contaContabil = d100Fields[23] || d100Fields[22] || '4.1.2.03.027'; // Conta contábil do D100
+
+            // Cálculos para COFINS (alíquota 7,60%)
+            const aliquotaCOFINS = 7.60;
+            const valorBC = valorD100 - valorICMS;
+            const valorCOFINS = (valorBC * aliquotaCOFINS) / 100;
+
+            // Cria o novo registro D105 com os valores calculados e fixos
+            const d105Fields = [
+                '',                                          // Campo 0: vazio (separador inicial)
+                'D105',                                      // Campo 1: tipo de registro
+                '0',                                         // Campo 2: valor fixo
+                valorD100.toString().replace('.', ','),      // Campo 3: valor base (do D100) com vírgula
+                '50',                                        // Campo 4: valor fixo
+                '14',                                        // Campo 5: valor fixo
+                valorBC.toString().replace('.', ','),      // Campo 6: valor base (repetido) com vírgula
+                aliquotaCOFINS.toString().replace('.', ','), // Campo 7: alíquota do COFINS com vírgula
+                valorCOFINS.toFixed(2).replace('.', ','),    // Campo 8: valor calculado do COFINS com vírgula
+                contaContabil,                               // Campo 9: conta contábil
+                ''                                           // Campo 10: vazio (separador final)
+            ];
+
+            return d105Fields.join('|');
+        }
+
+        // Função para baixar o arquivo preservando os bytes originais
+        function downloadFile() {
+            if (!processedContent) {
+                alert('Nenhum conteúdo processado para download!');
+                return;
+            }
+
+            // Cria o nome do arquivo de saída
+            const outputFileName = originalFileName.replace('.txt', '_modificado.txt');
+
+            // Converte a string de volta para bytes preservando os caracteres originais
+            const uint8Array = new Uint8Array(processedContent.length);
+            for (let i = 0; i < processedContent.length; i++) {
+                uint8Array[i] = processedContent.charCodeAt(i);
+            }
+
+            // Cria um blob com os bytes exatos (sem especificar encoding)
+            const blob = new Blob([uint8Array], { type: 'application/octet-stream' });
+
+            // Cria um link temporário para download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = outputFileName;
+
+            // Simula o clique no link para iniciar o download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            addLog(`💾 Arquivo baixado: ${outputFileName} (bytes preservados)`);
+        }
+    </script>
+</body>
+
+</html>
