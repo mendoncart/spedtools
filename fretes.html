@@ -371,6 +371,8 @@
             const processedLines = [];
             let exist9900D101 = false; // Flag para verificar se existe 9900|D101
             let exist9900D105 = false; // Flag para verificar se existe 9900|D105
+            let hasD101Records = false; // Flag para verificar se existem registros D101
+            let hasD105Records = false; // Flag para verificar se existem registros D105
             let currentD100 = null;    // Armazena o registro D100 atual (pai)
             let d101Count = 0;         // Contador de D101 processados
             let d105Count = 0;         // Contador de D105 processados
@@ -455,14 +457,18 @@
                         }
                     }
                     // Se encontrar um registro D9900 para o registro D101, seta flag como true
+                    // Mantém a linha exatamente como está
                     else if (recordType === '9900' && fields[2] === 'D101') {
                         // Existe o registro contador de D101
                         exist9900D101 = true;
+                        processedLines.push(line);
                     }
                     // Se encontrar um registro D9900 para o registro D105, seta flag como true
+                    // Mantém a linha exatamente como está
                     else if (recordType === '9900' && fields[2] === 'D105') {
                         // Existe o registro contador de D105
                         exist9900D105 = true;
+                        processedLines.push(line);
                     }
                     // Para outros tipos de registro, mantém a linha EXATAMENTE como está
                     else {
