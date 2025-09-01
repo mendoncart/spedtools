@@ -424,6 +424,10 @@
                     }
                     // Se encontrou um registro D101, processa e modifica
                     else if (recordType === 'D101') {
+
+                        // Existe o registro contador de D101
+                        exist9900D101 = true;
+
                         if (currentD100) {
                             const newD101 = createD101(currentD100);
                             processedLines.push(newD101);
@@ -436,6 +440,10 @@
                     }
                     // Se encontrou um registro D105, processa e modifica
                     else if (recordType === 'D105') {
+
+                        // Existe o registro contador de D101
+                        exist9900D105 = true;
+
                         if (currentD100) {
                             const newD105 = createD105(currentD100);
                             processedLines.push(newD105);
